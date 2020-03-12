@@ -1,0 +1,7 @@
+[package]
+name = "yahtzee"
+version = "0.0.1"
+authors = ["Robert_M"]
+
+[dependencies]
+rand = "0.7.3"
