@@ -1,0 +1,7 @@
+[package]
+name = "longest_common_subsequence"
+version = "0.0.1"
+authors=["Robert_M"]
+
+[dependencies]
+vectors="0.3.0"
