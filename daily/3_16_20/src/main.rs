@@ -14,6 +14,7 @@ fn print_results(results: &Vec<Vec<i64>>) {
 fn backtrack(dp: &Vec<Vec<i64>>, input1: &Vec<i64>) -> Vec<i64> {
 	let (mut rows, mut cols) = (dp.len() - 1, dp[0].len() - 1);
 	let (mut diag, mut hrzn, mut vert, mut cur): (i64, i64, i64, i64);
+	let mut rev: Vec<i64> = Vec::new();
 	let mut ret: Vec<i64> = Vec::new();
 
 
@@ -24,7 +25,7 @@ fn backtrack(dp: &Vec<Vec<i64>>, input1: &Vec<i64>) -> Vec<i64> {
 		vert = dp[rows][cols - 1];
 
 		if diag == hrzn && diag == vert {
-			ret.push(input1[rows - 1]);
+			rev.push(input1[rows - 1]);
 			rows -= 1;
 			cols -= 1;
 		} else {
@@ -34,15 +35,15 @@ fn backtrack(dp: &Vec<Vec<i64>>, input1: &Vec<i64>) -> Vec<i64> {
 				cols -= 1;
 			}
 		}
-
 	}
 
+	let ctr = rev.len() - 1;
 
-	for i in ret.iter() {
-		print!("{:?}\n", i);
+	for i in rev.iter().rev() {
+		ret.push(*i);
 	}
-	// print!("rows: {:?}, cols: {:?}\n", rows, cols);
-	return vec![0];
+
+	return ret;
 
 }
 
@@ -57,7 +58,7 @@ fn find_subsequence(input1: Vec<i64>, input2: Vec<i64>) -> Vec<i64> {
 		for j in 1..memoize[0].len() {
 			cur_j = input2[j - 1];
 
-			print!("({:?}, {:?}) \n", cur_i, cur_j);
+			// print!("({:?}, {:?}) \n", cur_i, cur_j);
 
 			if cur_i == cur_j {
 				if memoize[i - 1][j] > memoize[i][j - 1] {
@@ -91,7 +92,7 @@ fn find_subsequence(input1: Vec<i64>, input2: Vec<i64>) -> Vec<i64> {
 		}
 	}
 
-	backtrack(&memoize, &input1);
+	ret_subsequence = backtrack(&memoize, &input1);
 	print_results(&memoize);
 
 	return ret_subsequence;
@@ -100,5 +101,7 @@ fn find_subsequence(input1: Vec<i64>, input2: Vec<i64>) -> Vec<i64> {
 fn main() {
 	let vec1 = vec![1, 2, 20, 23, 3, 24];
 	let vec2 = vec![1, 20, 23, 24];
-	find_subsequence(vec1, vec2);
+	for i in (find_subsequence(vec1, vec2)).iter() {
+		print!("{:?}, ", i);
+	}
 }
