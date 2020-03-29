@@ -39,9 +39,11 @@ fn backtrack(dp: &Vec<Vec<i64>>, input1: &Vec<i64>) -> Vec<i64> {
 
 	let ctr = rev.len() - 1;
 
-	for i in rev.iter().rev() {
+	ret = rev.iter().cloned().rev().collect();
+
+/*	for i in rev.iter().rev() {
 		ret.push(*i);
-	}
+	}*/
 
 	return ret;
 
@@ -99,8 +101,11 @@ fn find_subsequence(input1: Vec<i64>, input2: Vec<i64>) -> Vec<i64> {
 }
 
 fn main() {
-	let vec1 = vec![1, 2, 20, 23, 3, 24];
-	let vec2 = vec![1, 20, 23, 24];
+	// let vec1 = vec![1, 2, 20, 23, 3, 24];
+	// let vec2 = vec![1, 20, 23, 24];
+
+	let vec1 = vec![1];
+	let vec2 = vec![1];
 	for i in (find_subsequence(vec1, vec2)).iter() {
 		print!("{:?}, ", i);
 	}
