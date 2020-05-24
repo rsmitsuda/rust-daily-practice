@@ -1,7 +1,7 @@
 fn compare(s1: &str, s2: &str) -> bool {
-	/*if (s1.len() != s2.len()) {
+	if (s1.len() != s2.len()) {
 		return false;
-	}*/
+	}
 
 	for i in 0..s1.len() {
 		let (first, second) = s1.split_at(i);
@@ -9,8 +9,6 @@ fn compare(s1: &str, s2: &str) -> bool {
 		if (temp_str == s2) {
 			return true;
 		}
-		// print!("first: {:?}.. second: {:?}\n", first, second);
-
 	}
 
 	return false;
