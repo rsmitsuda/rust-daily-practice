@@ -19,7 +19,6 @@ fn main() {
     //let (tx, rx) = mpsc::channel::<String>();
     let (tx, rx) = channel::<String>();
 
-
     loop {
         let result = match tcp_streams.accept() {
             Ok((mut tcpstream, socketaddr)) => {
