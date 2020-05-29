@@ -8,7 +8,6 @@ use scraper::{Html, Selector};
 use select::predicate::Name;
 use select::predicate::Class;
 use select::document::Document;
-// use std::fs::File;
 
 async fn get_website(url: &str) -> Result<String, reqwest::Error> {
 	println!("testing 1");
@@ -32,10 +31,10 @@ async fn get_website(url: &str) -> Result<String, reqwest::Error> {
 
 
 	//get all links on the op.gg homepage
-    let doc_links = document.find(Name("a"))
-    	.filter_map(|links| links.attr("href"))
-    	.for_each(|x| println!("{}", x));
-	println!("testing 4");
+ //    let doc_links = document.find(Name("a"))
+ //    	.filter_map(|links| links.attr("href"))
+ //    	.for_each(|x| println!("{}", x));
+	// println!("testing 4");
 
 
     let temp_document = Html::parse_document(&ret);
@@ -47,15 +46,29 @@ async fn get_website(url: &str) -> Result<String, reqwest::Error> {
     	println!("{:?}", champ_text);
     }
 
-    let mut champion_count = 0;
+    let mut node_count = 0;
     for node in document.find(Class("champion-index-table__cell--champion")) {
-    	let items = node;
-    	println!("{:?}", items);
-    	champion_count += 1;
+
+    	// let additional_url = node.find(Name("a"))
+    	// 	.filter_map(|links| links.attr("href"))
+    	// 	.for_each(|x| println!("{}", x));
+
+
+    	//is there a way to flatten this into a string?
+    	let additional_url = node.find(Name("a"))
+    		.filter_map(|links| links.attr("href"))
+    		.collect::<Vec<_>>();
+
+    	// let additional_url = node.find(Name("a"))
+    	// 	.filter_map(|links| links.attr("href"));
+
+    	// println!("{:?}", node);
+    	for thing in additional_url {
+    		println!("{}", thing);
+    	}
+    	node_count += 1;
     }
-	println!("{:?}", champion_count);
-
-
+	println!("{:?}", node_count);
 
 	println!("testing end");
     return Ok(ret);
