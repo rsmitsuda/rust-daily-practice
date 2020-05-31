@@ -1,0 +1,7 @@
+[package]
+name = "elliptic_curve"
+version = "0.0.1"
+authors = ["Robert_M"]
+
+[dependencie.x25519-dalek]
+version = "0.6"
