@@ -4,7 +4,6 @@ extern crate scraper;
 extern crate tokio;
 
 use scraper::{Html, Selector};
-// use select::predicate::{Predicate, Attr, Class, Name};
 use select::predicate::Name;
 use select::predicate::Class;
 use select::document::Document;
@@ -18,33 +17,23 @@ async fn get_website(url: &str) -> Result<String, reqwest::Error> {
     let ret_as_bytes = ret.as_bytes();
 	println!("testing 1.2");
 
-
-    // print!("UTFL {:?}\n", String::from_utf8(ret_as_bytes.to_vec()));
-
     let response = reqwest::get(url).await?;
 	println!("testing 2");
-
 
     //get op.gg page
 	let document = Document::from_read(ret_as_bytes).unwrap();
 	println!("testing 3");
 
-
-	//get all links on the op.gg homepage
- //    let doc_links = document.find(Name("a"))
- //    	.filter_map(|links| links.attr("href"))
- //    	.for_each(|x| println!("{}", x));
-	// println!("testing 4");
-
-
-    let temp_document = Html::parse_document(&ret);
-    let champions = Selector::parse(".champion-index-table__name").unwrap();
+    // let temp_document = Html::parse_document(&ret);
+    // let champions = Selector::parse(".champion-index-table__name").unwrap();
 
     //printing out champions [test]
-    for champion in temp_document.select(&champions) {
-    	let champ_text = champion.text().collect::<Vec<_>>();
-    	println!("{:?}", champ_text);
-    }
+    // for champion in temp_document.select(&champions) {
+    // 	let champ_text = champion.text().collect::<Vec<_>>();
+    // 	println!("{:?}", champ_text);
+    // }
+
+    println!("{:?}", document);
 
     let mut node_count = 0;
     for node in document.find(Class("champion-index-table__cell--champion")) {
@@ -59,16 +48,27 @@ async fn get_website(url: &str) -> Result<String, reqwest::Error> {
     		.filter_map(|links| links.attr("href"))
     		.collect::<Vec<_>>();
 
-    	// let additional_url = node.find(Name("a"))
-    	// 	.filter_map(|links| links.attr("href"));
+		// println!("{:?}", additional_url.first().unwrap());
 
-    	// println!("{:?}", node);
-    	for thing in additional_url {
-    		println!("{}", thing);
-    	}
-    	node_count += 1;
+		let string_to_apped = additional_url.first().unwrap().to_string();
+		// let individual_champ_url = url.to_string().push_str(&string_to_apped);
+		let individual_champ_url = format!("{}{}", url, string_to_apped);
+
+		// println!("{:?}", url.to_string());
+		println!("{:?}", individual_champ_url);
+
+		//fetch the individual champ page
+	    // let champ_page = reqwest::get(&individual_champ_url).await?.text().await?;
+	    // let page_as_bytes = champ_page.as_bytes();
+	    // let champ_doc = Document::from_read(page_as_bytes).unwrap();
+	    // let best_items = champ_doc.find(Class(""))
+
+	    // println!("{:?}", champ_response);
+
+	    break;
+
+
     }
-	println!("{:?}", node_count);
 
 	println!("testing end");
     return Ok(ret);
