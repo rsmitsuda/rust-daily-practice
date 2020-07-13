@@ -1,14 +1,10 @@
-// use hex;
-// use std::collections::HashMap;
+use std::str;
 
 fn convert_to_u8(hex_string: &str) -> Vec<u8> {
 	let mut byte_vec = Vec::new();
 
-	// for i in 0..hex_string.len() {
 	for i in (0..hex_string.len()).step_by(2) {
-
 		let decimal_byte = u8::from_str_radix(&hex_string[i..i+2], 16);
-		println!("{:?}", decimal_byte);
 
 		match decimal_byte {
 			Ok(val) => byte_vec.push(val),
@@ -16,56 +12,54 @@ fn convert_to_u8(hex_string: &str) -> Vec<u8> {
 		}
 	}
 
-	for x in byte_vec.iter() {
-		println!("{:?}", x);
-	}
-
 	return byte_vec;
 }
 
-// fn xor_strings(s1: &str, s2: &str) -> String {
-// 	let s1_from_hex = convert_to_u8(&s1);
-// 	let s2_from_hex = convert_to_u8(&s2);	
-
-// 	let xor_vals: Vec<u8> = s1_from_hex.iter()
-// 		.zip(s2_from_hex.iter())
-// 		.map(|(&x1, &x2)| x1 ^ x2)
-// 		.collect();
-
-// 	let ret_str = hex::encode(xor_vals);
-// 	println!("{:?}", ret_str);
-
-// 	return ret_str.to_string();
-// }
-
-fn generate_score(char_vals: &Vec<(u8, f32)>) -> f32 {
+fn generate_score(char_vals: &Vec<(u8, f32)>, byte_vec: &Vec<u8>, byte_vec_size: usize) -> f32 {
 	//compare the score of each letter
-	//compute the difference in relative frequency (abs val) --> add it all together
-	//the highest score is bad
-	return 0.0;
+	let mut cur_char_count = 0;
+	let mut ret_score: f32 = 0.0;
+	// let mut ctr = 1;
+
+	for (key, occurence) in char_vals.iter() {
+		cur_char_count = byte_vec.iter()
+			.filter(|&x| *x == *key)
+			.count();
+
+		ret_score += (((cur_char_count as f32) / (byte_vec_size as f32) * 100.0) - occurence).abs();
+
+	}
+	// println!("ret_score: {:?}", ret_score);
+
+	return ret_score;
 }
 
-fn xor_data(char_vals: Vec<(u8, f32)>) -> String {
-	let mut lowest_score: f32 = 0.0;
-	let mut ret_str: &str = "";
+fn xor_data(char_vals: &Vec<(u8, f32)>, byte_vec: &Vec<u8>) -> String {
+	//initialize lowest_score as an arbitrarily large num
+	let mut lowest_score: f32 = 10000.0;
+	let mut ret_str: String = "".to_string();
 	let mut cur_score = 0.0;
-	ret_str = "test";
-	lowest_score = 0.1;
+	let mut cur_char: u8 = 0;
+	let mut temp_vec: Vec<u8> = Vec::new();
 
-	for x in 0..255 {
-		cur_score = generate_score(&char_vals);
+	for x in (0 as u8)..(255 as u8) {
+		temp_vec = byte_vec.iter()
+			.map(|&val| val ^ x)
+			.collect();
+
+		// println!("the string: {:?}", String::from_utf8_lossy(&temp_vec));
+		cur_score = generate_score(&char_vals, &temp_vec, byte_vec.len());
+
 		if cur_score < lowest_score {
-			// lowest_score = generate_score(char_vals);
-
-			//compress the byte array into string
-			// ret_str = data.collect();
+			lowest_score = cur_score;
+			ret_str = String::from_utf8_lossy(&temp_vec).to_string();
 		}
 
 	}
 
-	return ret_str.to_string();
+	// println!("FINAL STRING{:?}", ret_str);
+	return ret_str;
 }
-
 
 fn initialize_data(char_vals: &mut Vec<(u8, f32)>) {
 	char_vals.push((b'a', 8.5));
@@ -97,28 +91,10 @@ fn initialize_data(char_vals: &mut Vec<(u8, f32)>) {
 }
 
 fn main() {
-	// let mut char_vals:HashMap<u8, f32> = HashMap::new();
 	let mut char_data: Vec<(u8, f32)> = Vec::new();
 	let byte_vec = convert_to_u8(&"1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736");
 
-	//switch this to hold the values of the current count
 	initialize_data(&mut char_data);
+	println!("{:?}", xor_data(&char_data, &byte_vec));
 
-
-	//need to create an array of tuples to hold the char_vals (the ratio for each char) and reference that array when computing the score
-
-
-
-	// for x in (0 as u8)..(255 as u8) {
-	for x in 0..255 {
-
-		println!("{:?}", x);
-		println!("xor val: {:?}", byte_vec[0] ^ x);
-
-
-	}
-
-	for x in char_data.iter() {
-		println!("{:?}", x);
-	}
 }
