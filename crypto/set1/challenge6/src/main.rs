@@ -75,25 +75,26 @@ fn find_key_size(input: &str) -> Vec<i32> {
 	return ret_key_sizes;
 }
 
-fn decrypt_data(key_sizes: Vec<i32>, input: &str) -> String {
+fn decrypt_data(key_sizes: &Vec<i32>, input: &str) -> String {
 	let input_bytes_arr = base64::decode(&input).unwrap();
-
 
 	for key in key_sizes.iter() {
 		let input_chunks: Vec<&[u8]> = input_bytes_arr.chunks(*key as usize).collect();
+		// println!("numchunks: {:?},\n{:?}", input_chunks.len(), input_chunks);
 
 		//need to form X blocks comprised of byte N from each chunk
-		for chunk in input_chunks {
-			for n in 0..*key {
-				//create the new chunk by adding byte N from each chunk
-					//bytechunk.add(chunk[n])
-				//pass this bytechunk to xor function
-				//return the letter for this chunk and add it to the key
-					//key += xor(bytechunk)
-				println!("{:?}", n);
-			}
-		}
+		for x in 0..*key {
+			let mut new_chunk: Vec<u8> = b"".to_vec();
 
+			for chunk in &input_chunks {
+				//need to have if condition to make sure the index doesn't go out of index of the chunk
+				if x < chunk.len() as i32 {
+					new_chunk.push(chunk[x as usize]);
+				}
+			}
+
+			// println!("new chunk (len {:?}): {:?}", new_chunk.len(), new_chunk);
+		}
 	}
 
 	return "".to_string();
@@ -128,7 +129,7 @@ fn main() {
 	let file_str = open_file("full_input.txt").unwrap();
 
 	let key_sizes = find_key_size(&file_str);
-	decrypt_data(key_sizes, &file_str);
+	decrypt_data(&key_sizes, &file_str);
 
 
 }
