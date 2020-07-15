@@ -14,30 +14,6 @@ static BIT_MASKS: [u8; 8] = [
 	0x80, //0x80 10000000
 ];
 
-//calculate hamming distance between strings
-// fn calc_ham_dist(s1: &str, s2: &str) -> i32{
-// 	if s1.len() != s2.len() {
-// 		return 0;
-// 	}
-
-// 	let s1_bytes = s1.as_bytes().to_vec();
-// 	let s2_bytes = s2.as_bytes().to_vec();
-// 	let mut hamming_dist: i32 = 0;
-
-// 	println!("{:?}", s1_bytes);
-
-// 	for (byte1, byte2) in s1_bytes.iter().zip(s2_bytes.iter()) {
-// 		for x in 0..8 {
-// 			// println!("val1: {:?} val2: {:?}", (byte1 & BIT_MASKS[x]) >> x, (byte2 & BIT_MASKS[x]) >> x);
-// 			if ((byte1 & BIT_MASKS[x]) >> x) != ((byte2 & BIT_MASKS[x]) >> x) {
-// 				hamming_dist += 1;
-// 			}
-// 		}
-// 	}
-
-// 	return hamming_dist;
-// }
-
 //use for two values
 fn calc_ham_dist(s1: Vec<u8>, s2: Vec<u8>) -> i32{
 	if s1.len() != s2.len() {
@@ -58,16 +34,17 @@ fn calc_ham_dist(s1: Vec<u8>, s2: Vec<u8>) -> i32{
 	return hamming_dist;
 }
 
-fn find_key_size(input: &str) -> i32 {
-	let input_bytes = base64::decode(&input).unwrap().to_vec();
+fn find_key_size(input: &str) -> Vec<i32> {
 	let input_bytes_arr = base64::decode(&input).unwrap();
-
-
-	let mut ham_distance: i32 = 0;
+	let mut ret_key_sizes: Vec<i32> = Vec::new(); 
+	let mut smallest_ham_dist = 10000;
+	// let mut ham_distance: i32 = 0;
 	// println!("input bytes: {:?} ", input_bytes);
 
 	for x in 2..40 {
 		let mut input_chunks: Vec<&[u8]> = input_bytes_arr.chunks(x).collect();
+		let mut ham_distance: i32 = 0;
+
 
 		for y in 0..4 {
 			for z in 0..4 {
@@ -78,11 +55,48 @@ fn find_key_size(input: &str) -> i32 {
 
 		ham_distance = (ham_distance / 4) / x as i32;
 
-		// println!("ham distance: {:?}, key_size: {:?}", ham_distance, x);
+		//build vector with smallest key sizes
+		if ham_distance <= smallest_ham_dist {
+			if ham_distance == smallest_ham_dist {
+				ret_key_sizes.push(x as i32);
+			} else {
+				ret_key_sizes.clear();
+				ret_key_sizes.push(x as i32);
+
+			}
+			smallest_ham_dist = ham_distance;
+		}
+
+		// println!("ham_distance: {:?}, key: {:?}", ham_distance, x);
+	}
+
+	// println!("{:?}", ret_key_sizes);
+
+	return ret_key_sizes;
+}
+
+fn decrypt_data(key_sizes: Vec<i32>, input: &str) -> String {
+	let input_bytes_arr = base64::decode(&input).unwrap();
+
+
+	for key in key_sizes.iter() {
+		let input_chunks: Vec<&[u8]> = input_bytes_arr.chunks(*key as usize).collect();
+
+		//need to form X blocks comprised of byte N from each chunk
+		for chunk in input_chunks {
+			for n in 0..*key {
+				//create the new chunk by adding byte N from each chunk
+					//bytechunk.add(chunk[n])
+				//pass this bytechunk to xor function
+				//return the letter for this chunk and add it to the key
+					//key += xor(bytechunk)
+				println!("{:?}", n);
+			}
+		}
 
 	}
 
-	return 0;
+	return "".to_string();
 }
 
 fn open_file(file_name: &str) -> io::Result<String>{
@@ -99,7 +113,7 @@ fn open_file(file_name: &str) -> io::Result<String>{
 	return Ok(cur_line);
 }
 
-//need to change xor_data function from challenge 3 to return the xor character which will correspond to a single character of the key
+//need to change xor_data function from challenge 3 to return the xor'd character which will correspond to a single character of the key
 //need to run that function x times for length of key, building the key one character at a time
 //change the scoring system to count the raw frequency of character as the best score --> can ignore frequency * english frequency
 
@@ -113,7 +127,8 @@ fn main() {
 
 	let file_str = open_file("full_input.txt").unwrap();
 
-	find_key_size(&file_str);
+	let key_sizes = find_key_size(&file_str);
+	decrypt_data(key_sizes, &file_str);
 
 
 }
