@@ -5,7 +5,8 @@ use std::fs::File;
 use std::fs;
 use std::io::{self, prelude::*, BufReader};
 
-const BLOCKSIZE: u8 = 128;
+//block size is 128 bits (16 bytes)
+const BLOCKSIZE: u8 = 16;
 
 fn open_file(file_name: &str) -> io::Result<String>{
 	let file = File::open(file_name)?;
@@ -20,7 +21,7 @@ fn open_file(file_name: &str) -> io::Result<String>{
 }
 
 fn cbc_decrypt(cipher: openssl::symm::Cipher, iv: Option<&[u8]>, data: &[u8], key: &[u8]) {
-	//need to break this into blocks of 128 bytes
+	//need to break this into blocks of 128 bits
 	let ciphertext = decrypt(
 		cipher,
 		key,
