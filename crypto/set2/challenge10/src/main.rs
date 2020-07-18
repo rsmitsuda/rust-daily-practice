@@ -1,15 +1,35 @@
 use std::str;
 use openssl::symm::{decrypt, Cipher};
 use base64;
+use std::fs::File;
+use std::fs;
+use std::io::{self, prelude::*, BufReader};
 
 const BLOCKSIZE: u8 = 128;
 
-fn cbc_decrypt() {
-    let cipher = Cipher::aes_128_ecb();
+fn open_file(file_name: &str) -> io::Result<String>{
+	let file = File::open(file_name)?;
+	let reader = BufReader::new(file);
+	let mut cur_line: String = "".to_string();
+
+	for line in reader.lines() {
+		cur_line = format!("{}{}", cur_line, line.unwrap());
+	}
+
+	return Ok(cur_line);
 }
 
-fn cbc_encrypt() {
-	let cipher = Cipher::aes_128_ecb();
+fn cbc_decrypt(cipher: openssl::symm::Cipher, iv: Option<&[u8]>, data: &[u8], key: &[u8]) {
+	//need to break this into blocks of 128 bytes
+	let ciphertext = decrypt(
+		cipher,
+		key,
+		iv,
+		data
+		).unwrap();
+}
+
+fn cbc_encrypt(cipher: openssl::symm::Cipher, iv: &[u8]) {
 
 }
 
@@ -30,6 +50,12 @@ fn insert_padding(input: &str, blocksize: i8) -> String {
 }
 
 fn main() {
+	let cipher = Cipher::aes_128_ecb();
+	let key: &[u8] = b"YELLOW SUBMARINE";
 	let iv: &[u8] = &vec![0x00; BLOCKSIZE as usize];
-	println!("{:?}", iv);
+	
+	let data:&[u8] = &base64::decode(open_file("input.txt").unwrap()).unwrap();
+	println!("{:?}", data);
+	cbc_decrypt(cipher, Some(iv), data, key);
+
 }
