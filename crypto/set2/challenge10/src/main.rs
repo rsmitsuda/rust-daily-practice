@@ -1,5 +1,5 @@
 use std::str;
-use openssl::symm::{decrypt, Cipher};
+use openssl::symm::{decrypt, Cipher, encrypt, Crypter, Mode};
 use base64;
 use std::fs::File;
 use std::fs;
@@ -20,14 +20,41 @@ fn open_file(file_name: &str) -> io::Result<String>{
 	return Ok(cur_line);
 }
 
+
+fn xor_data(vec1: &Vec<u8>, vec2: &Vec<u8>) -> Vec<u8> {
+	let mut ret_str: String = "".to_string();
+	let mut temp_vec: Vec<u8> = Vec::new();
+
+	for (x, y) in vec1.iter().zip(vec2.iter()) {
+		temp_vec.push(x ^ y);
+	}
+
+	return temp_vec;
+}
+
 fn cbc_decrypt(cipher: openssl::symm::Cipher, iv: Option<&[u8]>, data: &[u8], key: &[u8]) {
-	//need to break this into blocks of 128 bits
-	let ciphertext = decrypt(
-		cipher,
-		key,
-		iv,
-		data
-		).unwrap();
+	//need to break this into blocks of 128 bits (16 byte chunks)
+	let data_chunks: Vec<&[u8]> = data.chunks(16).collect();
+	let mut change_iv = iv.unwrap().clone().to_vec();
+	let mut aes = Crypter::new(cipher, Mode::Decrypt, key, None).unwrap();
+	let mut ret_str: String = "".to_string();
+
+	for chunk in data_chunks {
+		println!("chunk1: {:?}", chunk);
+		println!("cur iv {:?}", change_iv);
+		let mut ret_thing = vec![0 as u8; chunk.len() + 16];
+		aes.update(&chunk, &mut ret_thing);
+		let test_me = xor_data(&ret_thing, &change_iv);
+		change_iv = chunk.to_vec();
+		println!("change iv: {:?}", change_iv);
+		println!("{:?}", str::from_utf8(&test_me));
+
+		ret_str = format!("{}{}", ret_str, str::from_utf8(&test_me).unwrap());
+		// ret_thing.clear();
+		aes = Crypter::new(cipher, Mode::Decrypt, key, None).unwrap();
+	}
+
+	println!("final string: {:?}", ret_str);
 }
 
 fn cbc_encrypt(cipher: openssl::symm::Cipher, iv: &[u8]) {
@@ -53,10 +80,11 @@ fn insert_padding(input: &str, blocksize: i8) -> String {
 fn main() {
 	let cipher = Cipher::aes_128_ecb();
 	let key: &[u8] = b"YELLOW SUBMARINE";
-	let iv: &[u8] = &vec![0x00; BLOCKSIZE as usize];
-	
+	let iv: &[u8] = &vec![0x00; BLOCKSIZE as usize];	
 	let data:&[u8] = &base64::decode(open_file("input.txt").unwrap()).unwrap();
-	println!("{:?}", data);
+
 	cbc_decrypt(cipher, Some(iv), data, key);
 
+
+	// cbc_decrypt(cipher, Some(iv), &ciphertext, key);
 }
