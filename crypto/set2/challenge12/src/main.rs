@@ -82,6 +82,45 @@ fn find_aes_mode(input_vec: &Vec<u8>) {
 	}
 }
 
+fn create_secret(blocksize: i32, oracle: &mut EcbOracle) {
+	//get len of ciphertext with no additional input
+	let mut secret_builder = Vec::new();
+	let ciphertext = oracle.oracle_encrypt(&secret_builder);
+
+	println!("{:?}", ciphertext.len());
+
+	let mut secret_builder_idx = blocksize - 1 - (secret_builder.len() as i32 % blocksize);
+	let mut byte_by_byte_vec = vec![b'A'; blocksize as usize];
+
+	//this index will be used to compare the current ciphertext byte in the secretbuilder with the unknkown ciphertext byte
+	let mut cur_idx = 0;
+	let mut final_secret: Vec<Vec<u8>> = Vec::new();
+	println!("{:?}", byte_by_byte_vec);
+	println!("final_secret {:?}", final_secret.len());
+
+
+	for i in 0..ciphertext.len() {
+		//cycle through all possible bytes 
+		for j in 0..255 {
+			byte_by_byte_vec[secret_builder_idx as usize] = ((j as u8).to_ne_bytes())[0];
+			// println!("{:?}", byte_by_byte_vec);
+			//oracle.oracle_encrypt(byte_by_byte_vec)
+
+			//if ciphertext[blocksize * final_secret.len() + secret_builder_len] == ciphertext[secret_builder_len]
+			//we will use the first block to test the bytes, then compare it against the bytes in the actual ciphertext
+				//prepend byte j to the secretbuilder
+				//cur_idx += 1;
+
+		}
+
+		secret_builder_idx = blocksize - 1 - (secret_builder.len() as i32 % blocksize);
+
+		//if secret_builder.len == blocksize, then add it to a vec<vec<u8>> which will represent the final unknown secret
+			//reset secret_builder
+	}
+
+}
+
 fn main() {
     let unknown = base64::decode("Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkgaGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBqdXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUgYnkK").unwrap();
     let temp = unknown.clone();
@@ -102,4 +141,8 @@ fn main() {
     let repeat_data = vec![b'0'; 10000];
     let temp_ciphertext = oracle.oracle_encrypt(&repeat_data);
     find_aes_mode(&temp_ciphertext);
+
+    //start to build the secret unknown
+    create_secret(blocksize, &mut oracle);
+
 }
