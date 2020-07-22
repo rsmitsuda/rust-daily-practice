@@ -84,41 +84,81 @@ fn find_aes_mode(input_vec: &Vec<u8>) {
 
 fn create_secret(blocksize: i32, oracle: &mut EcbOracle) {
 	//get len of ciphertext with no additional input
-	let mut secret_builder = Vec::new();
-	let ciphertext = oracle.oracle_encrypt(&secret_builder);
+	let mut secret_builder: Vec<u8> = Vec::new();
 
-	println!("{:?}", ciphertext.len());
+	//this is the length of cyphertext created with no added data
+	let length_to_be_found = oracle.oracle_encrypt(&secret_builder).len();
 
+	//idx to keep track of which byte we need to decode
 	let mut secret_builder_idx = blocksize - 1 - (secret_builder.len() as i32 % blocksize);
-	let mut byte_by_byte_vec = vec![b'A'; blocksize as usize];
 
-	//this index will be used to compare the current ciphertext byte in the secretbuilder with the unknkown ciphertext byte
-	let mut cur_idx = 0;
+	//vector that will be used as input data into cypher to decode the unknown string
+	let mut byte_by_byte_vec = vec![b'A'; secret_builder_idx as usize];
+
+	//vector of byte blocks 
 	let mut final_secret: Vec<Vec<u8>> = Vec::new();
-	println!("{:?}", byte_by_byte_vec);
-	println!("final_secret {:?}", final_secret.len());
 
 
-	for i in 0..ciphertext.len() {
+
+
+
+	for i in 0..length_to_be_found {
 		//cycle through all possible bytes 
+		println!("secret_builder_len {:?}", secret_builder_idx);
+		let mut input_vec = vec![b'A'; secret_builder_idx as usize];
+		let ciphertext = oracle.oracle_encrypt(&input_vec);
+		//need to add one additional space to the vector (for the new_ciphertext) since this is the byte that we will use to decode the ciphertext
+		// input_vec.push(b'A');
+
 		for j in 0..255 {
-			byte_by_byte_vec[secret_builder_idx as usize] = ((j as u8).to_ne_bytes())[0];
-			// println!("{:?}", byte_by_byte_vec);
+			// let mut test_vec = vec![b'A'; blocksize as usize];
+			// test_vec[15] = ((j as u8).to_ne_bytes())[0];
+			//this is the initial cyphertext -- looking for byte16 (byte at index 15)
+			input_vec.extend(&secret_builder);
+			input_vec.push(((j as u8).to_ne_bytes())[0]);
+
+			if i == 0 {
+				println!("{:?}", input_vec);
+
+			}
+			let new_ciphertext = oracle.oracle_encrypt(&input_vec);
+			// println!("{:?}", input_vec);
+
+			if i == 0 {
+				// println!("{:?}", byte_by_byte_vec);
+				// println!("first: {:?} second: {:?}", blocksize as usize * final_secret.len() + secret_builder_idx as usize, secret_builder_idx);
+
+
+			}
 			//oracle.oracle_encrypt(byte_by_byte_vec)
 
-			//if ciphertext[blocksize * final_secret.len() + secret_builder_len] == ciphertext[secret_builder_len]
-			//we will use the first block to test the bytes, then compare it against the bytes in the actual ciphertext
+
+
+			// if ciphertext[blocksize as usize * final_secret.len() + secret_builder_idx as usize] == new_ciphertext[secret_builder_idx as usize] {
+			if ciphertext[.. (blocksize as usize * final_secret.len() + secret_builder_idx as usize)] == new_ciphertext[.. secret_builder_idx as usize] {
+
 				//prepend byte j to the secretbuilder
-				//cur_idx += 1;
+				println!("WE FOUND A MATCH ({:?}): {:?}", i, ((j as u8).to_ne_bytes())[0]);
+				secret_builder.push(((j as u8).to_ne_bytes())[0]);
+				 println!("first: {:?} second: {:?}", blocksize as usize * final_secret.len() + secret_builder_idx as usize, secret_builder_idx);
+
+				break;
+			}
+
+			input_vec = vec![b'A'; secret_builder_idx as usize];
 
 		}
-
+		// byte_by_byte_vec = vec![b'A'; blocksize as usize];
 		secret_builder_idx = blocksize - 1 - (secret_builder.len() as i32 % blocksize);
 
-		//if secret_builder.len == blocksize, then add it to a vec<vec<u8>> which will represent the final unknown secret
-			//reset secret_builder
+		if secret_builder.len() as i32 == blocksize {
+			final_secret.push(secret_builder.clone());
+			secret_builder.clear();
+			println!("FOUND ONE FULL BLOCK");
+		}
 	}
 
+	// println!("{:?}", ciphertext);
 }
 
 fn main() {
@@ -135,7 +175,7 @@ fn main() {
 
     //print blocksize
     let (blocksize, ciphertext): (i32, Vec<u8>) = find_block_size(&mut oracle);
-    println!("blocksize: {:?}", blocksize);
+    // println!("blocksize: {:?}", blocksize);
 
     //detect cipher mode
     let repeat_data = vec![b'0'; 10000];
