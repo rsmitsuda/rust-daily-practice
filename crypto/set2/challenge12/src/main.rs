@@ -37,6 +37,7 @@ impl EcbOracle {
 			combined_data.push(*x);
 		}
 
+		// println!("combined_data: {:?}", combined_data);
 		let ciphertext = encrypt(
 			Cipher::aes_128_ecb(),
 			&self.key,
@@ -82,7 +83,7 @@ fn find_aes_mode(input_vec: &Vec<u8>) {
 	}
 }
 
-fn create_secret(blocksize: i32, oracle: &mut EcbOracle) {
+fn create_secret(blocksize: i32, oracle: &mut EcbOracle) -> Vec<u8> {
 	//get len of ciphertext with no additional input
 	let mut secret_builder: Vec<u8> = Vec::new();
 
@@ -92,73 +93,44 @@ fn create_secret(blocksize: i32, oracle: &mut EcbOracle) {
 	//idx to keep track of which byte we need to decode
 	let mut secret_builder_idx = blocksize - 1 - (secret_builder.len() as i32 % blocksize);
 
-	//vector that will be used as input data into cypher to decode the unknown string
-	let mut byte_by_byte_vec = vec![b'A'; secret_builder_idx as usize];
-
-	//vector of byte blocks 
-	let mut final_secret: Vec<Vec<u8>> = Vec::new();
-
-
-
-
+	let mut found_char = false;
 
 	for i in 0..length_to_be_found {
-		//cycle through all possible bytes 
-		println!("secret_builder_len {:?}", secret_builder_idx);
 		let mut input_vec = vec![b'A'; secret_builder_idx as usize];
 		let ciphertext = oracle.oracle_encrypt(&input_vec);
-		//need to add one additional space to the vector (for the new_ciphertext) since this is the byte that we will use to decode the ciphertext
-		// input_vec.push(b'A');
 
-		for j in 0..255 {
-			// let mut test_vec = vec![b'A'; blocksize as usize];
-			// test_vec[15] = ((j as u8).to_ne_bytes())[0];
-			//this is the initial cyphertext -- looking for byte16 (byte at index 15)
+		for j in 0..256 {
 			input_vec.extend(&secret_builder);
 			input_vec.push(((j as u8).to_ne_bytes())[0]);
 
-			if i == 0 {
-				println!("{:?}", input_vec);
-
-			}
 			let new_ciphertext = oracle.oracle_encrypt(&input_vec);
-			// println!("{:?}", input_vec);
 
-			if i == 0 {
-				// println!("{:?}", byte_by_byte_vec);
-				// println!("first: {:?} second: {:?}", blocksize as usize * final_secret.len() + secret_builder_idx as usize, secret_builder_idx);
-
-
-			}
-			//oracle.oracle_encrypt(byte_by_byte_vec)
-
-
-
-			// if ciphertext[blocksize as usize * final_secret.len() + secret_builder_idx as usize] == new_ciphertext[secret_builder_idx as usize] {
-			if ciphertext[.. (blocksize as usize * final_secret.len() + secret_builder_idx as usize)] == new_ciphertext[.. secret_builder_idx as usize] {
-
-				//prepend byte j to the secretbuilder
-				println!("WE FOUND A MATCH ({:?}): {:?}", i, ((j as u8).to_ne_bytes())[0]);
+			//check if whole blocks are equal
+			if ciphertext[..(secret_builder.len() + secret_builder_idx as usize + 1)] == new_ciphertext[..(secret_builder.len() + secret_builder_idx as usize + 1)] {
 				secret_builder.push(((j as u8).to_ne_bytes())[0]);
-				 println!("first: {:?} second: {:?}", blocksize as usize * final_secret.len() + secret_builder_idx as usize, secret_builder_idx);
-
+				found_char = true;
 				break;
-			}
+			} 
 
 			input_vec = vec![b'A'; secret_builder_idx as usize];
-
 		}
-		// byte_by_byte_vec = vec![b'A'; blocksize as usize];
+
+		//inputting 1 as the last char because of padding.. it puts 1 because the last block will be real block sans one character, then add padding (x01)
+		//fails afterwards because padding will change, so they will never be equal again because previous char will have changed in new ciphertext
+		//example AAAA AAAA AAAA AAA(x01) => AAAA AAAA AAAA AA(x02)(x02) (byte at idx 14 was decoded as 1, but changes to 2 in the new ciphertext because of padding)
+		//we can use found_char bool to know when we really finished and remove the last byte because we know it is padding if we can't decode another character
+		if !found_char {
+			secret_builder.remove(secret_builder.len() - 1);
+			break;
+		} else {
+			found_char = false;
+		}
+
 		secret_builder_idx = blocksize - 1 - (secret_builder.len() as i32 % blocksize);
 
-		if secret_builder.len() as i32 == blocksize {
-			final_secret.push(secret_builder.clone());
-			secret_builder.clear();
-			println!("FOUND ONE FULL BLOCK");
-		}
 	}
 
-	// println!("{:?}", ciphertext);
+	return secret_builder;
 }
 
 fn main() {
@@ -183,6 +155,8 @@ fn main() {
     find_aes_mode(&temp_ciphertext);
 
     //start to build the secret unknown
-    create_secret(blocksize, &mut oracle);
+    let built_secret = create_secret(blocksize, &mut oracle);
+    println!("{:?}", built_secret);
 
+    assert!(built_secret == temp);
 }
